@@ -26,8 +26,8 @@ import scipy.linalg as lin
 import numpy.linalg as linNum
 import numpy as numpy
 #from sympy import *
-from sage.interfaces.phc import phc
-
+#from sage.interfaces.phc import phc
+import phcpy as phc
 
 from sage.plot.plot3d.plot3d import axes
 from sage.plot.colors import rainbow
@@ -199,13 +199,18 @@ def findRoots(wordMatrix,zM):
     r"""
     Solve for X matrix
     """
-    R.<x11,x12,x21,x22> = PolynomialRing(RDF,4)
-    system = [wordMatrix[0,0]-zM[0,0], wordMatrix[0,1]-zM[0,1],wordMatrix[1,0]-zM[1,0],wordMatrix[1,1]-zM[1,1]]
-  
-    v = phc.blackbox(system,R)
-    print(v)
-    sols = v.solutions()
-    return numpy.array([sols[0],sols[1],[sols[3],sols[4]]])
+    
+    system = [str(wordMatrix[0,0]-zM[0,0])+';', str(wordMatrix[0,1]-zM[0,1])+';',str(wordMatrix[1,0]-zM[1,0])+';',str(wordMatrix[1,1]-zM[1,1])+';']
+    
+    v=phc.solver.solve(system)
+    if v is None:
+        return None
+    realsols = phc.solutions.is_real(v[0],0) #boolean if solutions are real within a tolerance
+    if not realsols:
+        return None
+    v = phc.solutions.strsol2dict(v[0])
+    
+    return numpy.array([[ v['x11'].real, v['x12'].real],[ v['x21'].real, v['x22'].real]]) 
 def retrieveWords(w,xM,yM,zM,printWord=false):
     
     wordArray = w.split(",")
@@ -232,9 +237,10 @@ def retrieveWords(w,xM,yM,zM,printWord=false):
                 wordMatrix = wordMatrix @ linNum.inv(yM)#yM.inverse()
             else:
                 raise MyError("Unrecognized Character");
-        
+        print(wordMatrix)
         wordMatrix = findRoots(wordMatrix,zM)
-        
+        if wordMatrix is None:#check if complex
+            continue;
         u,s,vh = lin.svd(wordMatrix,lapack_driver='gesvd')#lin.svd(wordMatrix.numpy())#use scip.svd or numpy.svd
         s = numpy.diag(s)#make s diagonal
         #print("before u") #DEBUG
@@ -267,20 +273,20 @@ def build_frame(b,firstTheta,secondTheta,c,firstPhi,secondPhi):
     spher.transition_map(cart,[th,ph1,r])
    
     y = M.point((b,firstTheta,secondTheta), chart=spher,name = 'y')
-    arrayOfPoints.setdefault('yp',[]).append((firstTheta,secondTheta,a))
+    arrayOfPoints.setdefault('yp',[]).append((firstTheta,secondTheta,b))
     z = M.point((c,firstPhi,secondPhi), chart=spher,name = 'z')
-    arrayOfPoints.setdefault('zp',[]).append((firstPhi,secondPhi,b))
+    arrayOfPoints.setdefault('zp',[]).append((firstPhi,secondPhi,c))
     R.<x11,x12,x21,x22> = PolynomialRing(RDF,4)
     xM = numpy.array([[x11,x12],[x21,x22]])
     wordsArray = retrieveWords(wg,xM,yM,zM,false)
-    G = x.plot(cart,color = 'green')+y.plot(cart, color = 'yellow')+axes(1,0.5,color='black')
+    G = y.plot(cart,color = 'green')+z.plot(cart, color = 'yellow')+axes(1,0.5,color='black')
     
        
     #plot words
     if wordsArray is not None:
-         for word,c,firstPsi,secondPsi,fy,fx,sy,sx in wordsArray:
-            G += M.point((c,firstPsi,secondPsi),chart = spher, name = word).plot(cart,color = 'orange')
-            arrayOfPoints.setdefault(word,[]).append((firstPsi,secondPsi,c))
+         for word,d,firstPsi,secondPsi,fy,fx,sy,sx in wordsArray:
+            G += M.point((d,firstPsi,secondPsi),chart = spher, name = word).plot(cart,color = 'orange')
+            arrayOfPoints.setdefault(word,[]).append((firstPsi,secondPsi,d))
             #print("First Theta Error:(firsttheta-firstPsi) " + str(firstTheta - firstPsi) +" 1the " + str(firstTheta) + " 1psi " + str(firstPsi) + " y " + str(fy) + " x " +str(fx))
             #print("Second Theta Error " + str(secondTheta - secondPsi) +" " + str(secondTheta) + " " + str(secondPsi) + " " + str(fy) + " " +str(fx))
     
@@ -333,8 +339,8 @@ def main(w='x,y',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,
        
     #plot words
     if wordsArray is not None:
-         for word,c,firstPsi,secondPsi,fy,fx,sy,sx in wordsArray:
-            G += M.point((c,firstPsi,secondPsi),chart = spher, name = word).plot(cart,color = 'orange')
+         for word,d,firstPsi,secondPsi,fy,fx,sy,sx in wordsArray:
+            G += M.point((d,firstPsi,secondPsi),chart = spher, name = word).plot(cart,color = 'orange')
             #print(word + " from svd") #debug
             #print(c)
             #print(firstPsi)
@@ -344,13 +350,13 @@ def main(w='x,y',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,
     G.show(axes_label=['phi_1','phi_2','c'])#latex not supported yet for axex_label https://trac.sagemath.org/ticket/30226 todo
     pretty_print(html('<h3>Animation where %s is not constant'%(r'\(\theta_1\)')))
     #Let's animate!
-    #frames = [build_frame(a,i,secondTheta,b,firstPhi,secondPhi) for i in (0, 0.2, 0.3, .., 3.14)]# could do for a,b in zip(range1,range2)
-    #plot = animate(frames).interactive() + drawlines(1,0)
-    #plot.show(delay=10, auto_play=False, projection='orthographic',format='mp4')
-    #arrayOfPoints.clear()
+    frames = [build_frame(b,i,secondTheta,c,firstPhi,secondPhi) for i in (0, 0.2, 0.3, .., 3.14)]# could do for a,b in zip(range1,range2)
+    plot = animate(frames).interactive() + drawlines(1,0)
+    plot.show(delay=10, auto_play=False, projection='orthographic',format='mp4')
+    arrayOfPoints.clear()
 
     #pretty_print(html('<h3>Animation where %s is not constant'%(r'\(\theta_2\)')))
-    #frames = [build_frame(a,firstTheta,i,b,firstPhi,secondPhi) for i in (0, 0.2, 0.3, .., 2*numpy.pi)]# could do for a,b in zip(range1,range2)
+    #frames = [build_frame(b,firstTheta,i,c,firstPhi,secondPhi) for i in (0, 0.2, 0.3, .., 2*numpy.pi)]# could do for a,b in zip(range1,range2)
   
     #plot = animate(frames).interactive() + drawlines(1,0)
     #plot.show( delay=10, auto_play=False, projection='orthographic',format='mp4')
@@ -359,7 +365,7 @@ def main(w='x,y',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,
     #clear arrayOfPoints after an animation with any of the variables
     #pretty_print(html('<h3>Animation where firstTheta and firstPhi are not constant'))
     #changes below to pi from 2*pi
-    #frames = [build_frame(a,j,k,b,firstPhi,secondPhi) for j,k in zip((0.1, 0.2, 0.3, .., numpy.pi),(0.1, 0.2, 0.3, .., numpy.pi))]# could do for a,b in zip(range1,range2)
+    #frames = [build_frame(b,j,k,c,firstPhi,secondPhi) for j,k in zip((0.1, 0.2, 0.3, .., numpy.pi),(0.1, 0.2, 0.3, .., numpy.pi))]# could do for a,b in zip(range1,range2)
     #plot = animate(frames).interactive()
     #show(plot, delay=10, auto_play=False, projection='orthographic')
     </script>
