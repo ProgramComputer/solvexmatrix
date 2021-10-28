@@ -201,7 +201,7 @@ def findRoots(wordMatrix,zM):
     """
     
     system = [str(wordMatrix[0,0]-zM[0,0])+';', str(wordMatrix[0,1]-zM[0,1])+';',str(wordMatrix[1,0]-zM[1,0])+';',str(wordMatrix[1,1]-zM[1,1])+';']
-    
+    #print(system)#debug
     v=phc.solver.solve(system)
     if v is None:
         return None
@@ -222,13 +222,14 @@ def retrieveWords(w,xM,yM,zM,printWord=false):
     
     wordTuples = []
    
-    
+    hasX = False;#phcpack won't accept if there are no variables
     for word in wordArray:
     
         wordMatrix = numpy.array([[1,0],[0,1]])#matrix(RealField(12),2,2,[1,0,0,1])##
         for character in word:
             if character == 'x':  
                 wordMatrix = wordMatrix @ xM
+                hasX=True
             elif character == 'y': 
                 wordMatrix = wordMatrix @ yM
             elif character == 'X':
@@ -237,7 +238,12 @@ def retrieveWords(w,xM,yM,zM,printWord=false):
                 wordMatrix = wordMatrix @ linNum.inv(yM)#yM.inverse()
             else:
                 raise MyError("Unrecognized Character");
-        print(wordMatrix)
+        #print(wordMatrix) debug
+        if not hasX:
+            continue;
+        if printWord:
+            pretty_print(html("<br />%s = z_{0} := %s = %s$"%(r"$"+word, latex(matrix(wordMatrix.tolist())),latex(matrix(zM.tolist())))))
+
         wordMatrix = findRoots(wordMatrix,zM)
         if wordMatrix is None:#check if complex
             continue;
@@ -256,9 +262,7 @@ def retrieveWords(w,xM,yM,zM,printWord=false):
        
        
         
-        if printWord:
-            pretty_print(html("<br />%s = %s  = %s %s %s$"%(r"$"+word, latex(matrix(wordMatrix.tolist())), latex(matrix(u.tolist())),latex(matrix(s.tolist())), latex(matrix(vh.tolist())))))
-
+      
             
         wordTuples.append((word,s[0,0],(customAtan(u[1][0],u[0][0])),customAtan(vh[1][0],vh[0][0]),u[1][0],u[0][0],vh[1][0],vh[0][0]))
         
@@ -302,7 +306,7 @@ def build_frame(b,firstTheta,secondTheta,c,firstPhi,secondPhi):
 
 
 
-def main(w='x,y',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,0.01,3.14,label=r'\(\theta_1\)'),secondTheta=slider(0,2*3.14,0.01,3.14,label=r'\(\theta_2\)'),c=slider(1,100,0.1,2,label='$c_{0}$'),firstPhi=slider(0,3.14,0.01,3.14,label=r'\(\phi_1\)'),secondPhi=slider(0,2*3.14,0.01,3.14,label=r'\(\phi_2\)'),auto_update=False):
+def main(w='xy',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,0.01,3.14,label=r'\(\theta_1\)'),secondTheta=slider(0,2*3.14,0.01,3.14,label=r'\(\theta_2\)'),c=slider(1,100,0.1,2,label='$c_{0}$'),firstPhi=slider(0,3.14,0.01,3.14,label=r'\(\phi_1\)'),secondPhi=slider(0,2*3.14,0.01,3.14,label=r'\(\phi_2\)'),auto_update=False):
 
 
     global wg,ag,firstThetaq,secondThetag,bg,firstPhg,secondPhig,arrayOfPoints#global is used to help build_frame
