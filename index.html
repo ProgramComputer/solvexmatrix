@@ -26,6 +26,7 @@ import scipy.linalg as lin
 import numpy.linalg as linNum
 import numpy as numpy
 #from sympy import *
+from sympy import Matrix
 #from sage.interfaces.phc import phc
 import phcpy as phc
 
@@ -203,6 +204,7 @@ def findRoots(wordMatrix,zM):
     system = [str(wordMatrix[0,0]-zM[0,0])+';', str(wordMatrix[0,1]-zM[0,1])+';',str(wordMatrix[1,0]-zM[1,0])+';',str(wordMatrix[1,1]-zM[1,1])+';']
     #print(system)#debug
     v=phc.solver.solve(system)
+   
     if v is None:
         return None
     realsols = phc.solutions.is_real(v[0],0) #boolean if solutions are real within a tolerance
@@ -233,9 +235,9 @@ def retrieveWords(w,xM,yM,zM,printWord=false):
             elif character == 'y': 
                 wordMatrix = wordMatrix @ yM
             elif character == 'X':
-                wordMatrix = wordMatrix @ linNum.inv(xM)#xM.inverse()
+                wordMatrix = wordMatrix @ numpy.array(Matrix(xM).inv())#xM.inverse()#linNum.inv(xM)
             elif character == 'Y':  
-                wordMatrix = wordMatrix @ linNum.inv(yM)#yM.inverse()
+                wordMatrix = wordMatrix @ numpy.array(Matrix(yM).inv())#yM.inverse()#linNum.inv(yM)
             else:
                 raise MyError("Unrecognized Character");
         #print(wordMatrix) debug
@@ -306,7 +308,7 @@ def build_frame(b,firstTheta,secondTheta,c,firstPhi,secondPhi):
 
 
 
-def main(w='xy',b=slider(1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,0.01,3.14,label=r'\(\theta_1\)'),secondTheta=slider(0,2*3.14,0.01,3.14,label=r'\(\theta_2\)'),c=slider(1,100,0.1,2,label='$c_{0}$'),firstPhi=slider(0,3.14,0.01,3.14,label=r'\(\phi_1\)'),secondPhi=slider(0,2*3.14,0.01,3.14,label=r'\(\phi_2\)'),auto_update=False):
+def main(w='xy',b=slider(1.1,100,0.1,2,label='$b_{0}$'),firstTheta=slider(0,3.14,0.01,3.14,label=r'\(\theta_1\)'),secondTheta=slider(0,2*3.14,0.01,3.14,label=r'\(\theta_2\)'),c=slider(1.1,100,0.1,2,label='$c_{0}$'),firstPhi=slider(0,3.14,0.01,3.14,label=r'\(\phi_1\)'),secondPhi=slider(0,2*3.14,0.01,3.14,label=r'\(\phi_2\)'),auto_update=False):
 
 
     global wg,ag,firstThetaq,secondThetag,bg,firstPhg,secondPhig,arrayOfPoints#global is used to help build_frame
