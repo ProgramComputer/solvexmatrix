@@ -26,6 +26,8 @@ cd SageMath
 ln -s ~/Downloads/SageMath/sage /usr/local/bin/sage
 jupyter kernelspec install ~/Downloads/SageMath/local/share/jupyter/kernels/sagemath
 mv -f /solvex/makefile_unix ~/Downloads/PHCv2_4p/Objects
+mv -f /solvex/index.html.j2 /usr/local/share/jupyter/voila/templates/lab
+mv -f /solvex/favicons /usr/local/share/jupyter/voila/templates/base/static
 cd ~/Downloads/PHCv2_4p/Objects
 make phcpy2c3.so
 cd ~/Downloads/PHCv2_4p/Python/PHCpy3
