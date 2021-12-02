@@ -23,14 +23,14 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: https://solvexregistry.azurecr.io/
-          username: ${{ secrets.AzureAppService_ContainerUsername_738dac657ae54d0d98d40bd52c7087ca }}
-          password: ${{ secrets.AzureAppService_ContainerPassword_1a365297df7143afb643da5ab438fed1 }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build and push container image to registry
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: solvexregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_738dac657ae54d0d98d40bd52c7087ca }}/solvexcont:${{ github.sha }}
+          tags: solvexregistry.azurecr.io/${{ secrets.REGISTRY_USERNAME }}/solvexcont:${{ github.sha }}
           file: ./Docker/Dockerfile
 
   deploy:
@@ -47,5 +47,5 @@ jobs:
         with:
           app-name: 'solvexweb'
           slot-name: 'production'
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_27eb11aeae8347a3bd89f3bc3a1695c0 }}
-          images: 'solvexregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_738dac657ae54d0d98d40bd52c7087ca }}/solvexcont:${{ github.sha }}'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: 'solvexregistry.azurecr.io/${{ secrets.REGISTRY_USERNAME }}/solvexcont:${{ github.sha }}'
