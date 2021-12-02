@@ -31,7 +31,7 @@ jobs:
         with:
           push: true
           tags: solvexregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_738dac657ae54d0d98d40bd52c7087ca }}/solvexcont:${{ github.sha }}
-          file: ./Dockerfile
+          file: ./Docker/Dockerfile
 
     deploy:
       runs-on: ubuntu-latest
