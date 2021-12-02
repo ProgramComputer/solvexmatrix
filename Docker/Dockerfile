@@ -1,7 +1,5 @@
 FROM debian:bullseye
 
-WORKDIR /solvex
-
 COPY . . 
 
 
